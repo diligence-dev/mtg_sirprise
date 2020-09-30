@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation } from '@reach/router'
 
 const wubrg = 'wubrg'.split('')
 const callSetter = setter => event => setter(event.target.value)
@@ -37,7 +38,7 @@ const QueryResult = ({colors, expansion}) => {
 }
 
 export default function Home() {
-  const [expansion, setExpansion] = useState('')
+  const [expansion, setExpansion] = useState(useLocation().search.slice(1))
   const [colors, setColors] = useState('')
 
   const [allExpansion, setAllExpansions] = useState([])
