@@ -22,7 +22,7 @@ const QueryResult = ({colors, expansion}) => {
       .then(result => result.json())
       .then(json => {
         if (json.data) {
-          setCardImages(json.data.map(card => card.image_uris.normal))
+          setCardImages(json.data.map(card => (card.image_uris || card.card_faces[0].image_uris).normal))
         }
       })
   }, [colors, expansion])
