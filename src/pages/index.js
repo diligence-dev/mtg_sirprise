@@ -7,56 +7,52 @@ const callSetter = setter => event => setter(event.target.value)
 const isCastable = (openMana, manaCost) => {
   openMana = openMana.toUpperCase().match(/[WUBRGC]/g)
 
-  const graph = new jsgraphs.FlowNetwork(14)
   const source = 0
-  const sink = 13
   const openManaNode = {
     W: 1,
     U: 2,
     B: 3,
     R: 4,
     G: 5,
-    C: 6
+    C: 6, // colorless
   }
   const manaCostNode = {
-    W: 7,
-    U: 8,
-    B: 9,
-    R: 10,
-    G: 11,
-    C: 12
+    W: Object.keys(openManaNode).length + 1,
+    U: Object.keys(openManaNode).length + 2,
+    B: Object.keys(openManaNode).length + 3,
+    R: Object.keys(openManaNode).length + 4,
+    G: Object.keys(openManaNode).length + 5,
+    C: Object.keys(openManaNode).length + 6, // exactly colorless
+    A: Object.keys(openManaNode).length + 7, // any/generic mana
   }
+  const sink = Object.keys(openManaNode).length + Object.keys(manaCostNode).length + 1
 
-  openMana.forEach(x => graph.addEdge(new jsgraphs.FlowEdge(source, openManaNode[x], 1)))
+  const graph = new jsgraphs.FlowNetwork(sink + 1)
+
+  openMana.forEach(c => {
+    graph.addEdge(new jsgraphs.FlowEdge(source, openManaNode[c], 1))
+  })
+
+  Object.keys(openManaNode).forEach(c => {
+    graph.addEdge(new jsgraphs.FlowEdge(openManaNode[c], manaCostNode[c], 1000))
+    graph.addEdge(new jsgraphs.FlowEdge(openManaNode[c], manaCostNode['A'], 1000))
+  })
 
   let flowNeeded = 0
   manaCost
     .toUpperCase()
-    .replace('{X}', '')
-    .match(/\{([0-9]+|[WUBRG])\}/g)
-    .map(x => x.replace('{', '').replace('}', ''))
+    .replace(/\{(X|.\/P)\}/g, '')
+    .match(/\{([0-9]+|[WUBRGSC]|[WUBRG2]\/[WUBRG])\}/g)
+    .map(x => x.replace(/[{}]/g, ''))
     .forEach(x => {
-      if (wubrg.includes(x.toLowerCase())) {
+      if (Object.keys(openManaNode).includes(x)) {
         graph.addEdge(new jsgraphs.FlowEdge(manaCostNode[x], sink, 1))
         flowNeeded += 1
       } else {
-        graph.addEdge(new jsgraphs.FlowEdge(manaCostNode['C'], sink, parseInt(x, 10)))
+        graph.addEdge(new jsgraphs.FlowEdge(manaCostNode['A'], sink, parseInt(x, 10)))
         flowNeeded += parseInt(x, 10)
       }
     })
-
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['W'], manaCostNode['W'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['U'], manaCostNode['U'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['B'], manaCostNode['B'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['R'], manaCostNode['R'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['G'], manaCostNode['G'], 1000))
-
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['W'], manaCostNode['C'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['U'], manaCostNode['C'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['B'], manaCostNode['C'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['R'], manaCostNode['C'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['G'], manaCostNode['C'], 1000))
-  graph.addEdge(new jsgraphs.FlowEdge(openManaNode['C'], manaCostNode['C'], 1000))
 
   const maxFlow = new jsgraphs.FordFulkerson(graph, source, sink).value
   return maxFlow === flowNeeded
@@ -71,11 +67,7 @@ const QueryResult = ({openMana, expansion}) => {
       return
     }
 
-    if (openMana === '') {
-      openMana = 'wubrg'
-    }
-
-    const colorQuery = openMana
+    const colorQuery = (openMana === '' ? 'wubrgc' : openMana)
       .split('')
       .filter(c => wubrg.includes(c.toLowerCase()))
       .concat(['colorless'])
