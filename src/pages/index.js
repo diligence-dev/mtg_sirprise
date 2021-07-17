@@ -3,14 +3,19 @@ import jsgraphs from 'js-graph-algorithms'
 
 const callSetter = setter => event => setter(event.target.value)
 
-// returns an array of all possible mana costs (e.g. possibleManaCosts('1b/r2/g') === ['AB/RAA', 'AB/RG'])
-// expects string without {}, converts mana cost of 2 generic mana to AA, returns all uppercase
+// returns an array of all possible mana costs: possibleManaCosts('{1}{2/G}{B/R}') === ["AAAB", "AAAR", "AGB", "AGR"]
+// converts mana cost of 4 generic mana to AAAA
 const possibleManaCosts = manaCost => {
-  if (manaCost.search('2/') === -1) {
-    return [manaCost.replace(/[0-9]+/g, matchedNumber => 'A'.repeat(matchedNumber)).toUpperCase()]
+  manaCost = manaCost
+    .replace(/\{(X|.\/P)\}/g, '') // remove costs that can be paid with 0 mana
+    .replace(/\{([0-9]+)\}/g, (_, match) => 'A'.repeat(parseInt(match, 10)))
+    .replace(/[{}]/g, '')
+    .toUpperCase()
+  if (manaCost.search('/') === -1) {
+    return [manaCost.replace('2', 'AA')]
   }
-  return possibleManaCosts(manaCost.replace(/2\/(.)/, 'AA')).concat(
-    possibleManaCosts(manaCost.replace(/2\/(.)/, '$1'))
+  return possibleManaCosts(manaCost.replace(/(.)\/(.)/, '$1')).concat(
+    possibleManaCosts(manaCost.replace(/(.)\/(.)/, '$2'))
   )
 }
 
