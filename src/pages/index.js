@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import jsgraphs from 'js-graph-algorithms'
 
-const wubrg = 'wubrg'.split('')
 const callSetter = setter => event => setter(event.target.value)
+
+// returns an array of all possible mana costs (e.g. possibleManaCosts('1b/r2/g') === ['AB/RAA', 'AB/RG'])
+// expects string without {}, converts mana cost of 2 generic mana to AA, returns all uppercase
+const possibleManaCosts = manaCost => {
+  if (manaCost.search('2/') === -1) {
+    return [manaCost.replace(/[0-9]+/g, matchedNumber => 'A'.repeat(matchedNumber)).toUpperCase()]
+  }
+  return possibleManaCosts(manaCost.replace(/2\/(.)/, 'AA')).concat(
+    possibleManaCosts(manaCost.replace(/2\/(.)/, '$1'))
+  )
+}
 
 const isCastable = (openMana, manaCost) => {
   openMana = openMana.toUpperCase().match(/[WUBRGC]/g)
@@ -25,6 +35,20 @@ const isCastable = (openMana, manaCost) => {
     C: Object.keys(openManaNode).length + 6, // exactly colorless
     A: Object.keys(openManaNode).length + 7, // any/generic mana
   }
+  // TODO
+  const hybridManaCostNode = {
+    WU: Object.keys(openManaNode).length + 8,
+    WB: Object.keys(openManaNode).length + 9,
+    WR: Object.keys(openManaNode).length + 10,
+    WG: Object.keys(openManaNode).length + 11,
+    UB: Object.keys(openManaNode).length + 12,
+    UR: Object.keys(openManaNode).length + 13,
+    UG: Object.keys(openManaNode).length + 14,
+    BR: Object.keys(openManaNode).length + 15,
+    BG: Object.keys(openManaNode).length + 16,
+    RG: Object.keys(openManaNode).length + 17,
+  }
+
   const sink = Object.keys(openManaNode).length + Object.keys(manaCostNode).length + 1
 
   const graph = new jsgraphs.FlowNetwork(sink + 1)
@@ -69,11 +93,12 @@ const QueryResult = ({openMana, expansion}) => {
 
     const colorQuery = (openMana === '' ? 'wubrgc' : openMana)
       .split('')
-      .filter(c => wubrg.includes(c.toLowerCase()))
+      .filter(c => 'wubrg'.includes(c.toLowerCase()))
       .concat(['colorless'])
       .map(c => 'c:' + c)
       .join(' or ')
 
+    // TODO query for cycling and cycling cost separately
     const endpoint = 'https://api.scryfall.com/cards/search?order=cmc&q='
     const request = `${endpoint}s:${expansion}+(t:instant or o:flash)+(${colorQuery})`
     fetch(request)
