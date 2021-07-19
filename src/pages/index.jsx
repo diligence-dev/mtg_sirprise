@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
-import { isCastable } from '../mtg_sirprise_lib'
+import { isCastable } from '../mtg_sirprise_lib.mjs'
 
 const callSetter = setter => event => setter(event.target.value)
 

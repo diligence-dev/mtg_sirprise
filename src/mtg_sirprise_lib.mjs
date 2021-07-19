@@ -1,5 +1,11 @@
 import jsgraphs from 'js-graph-algorithms'
 
+const assert = (condition, message) => {
+    if (!condition) {
+        throw new Error(message || "Assertion failed");
+    }
+}
+
 // returns an array of all possible mana costs: possibleManaCosts('{1}{2/G}{B/R}') === ["AAAB", "AAAR", "AGB", "AGR"]
 // converts mana cost of 4 generic mana to AAAA
 const possibleManaCosts = manaCost => {
@@ -18,6 +24,7 @@ const possibleManaCosts = manaCost => {
 
 
 const isCastable = (openMana, manaCost) => {
+  assert(manaCost.includes('{'))
   openMana = openMana.toUpperCase().match(/[WUBRGC]/g)
 
   const source = 0
@@ -69,7 +76,7 @@ const isCastable = (openMana, manaCost) => {
   manaCost
     .toUpperCase()
     .replace(/\{(X|.\/P)\}/g, '')
-    .match(/\{([0-9]+|[WUBRGSC]|[WUBRG2]\/[WUBRG])\}/g)
+    .match(/\{([0-9]+|[WUBRGC]|[WUBRG2]\/[WUBRG])\}/g)
     .map(x => x.replace(/[{}]/g, ''))
     .forEach(x => {
       if (Object.keys(openManaNode).includes(x)) {
@@ -85,4 +92,4 @@ const isCastable = (openMana, manaCost) => {
   return maxFlow === flowNeeded
 }
 
-export {isCastable}
+export {isCastable, possibleManaCosts}
