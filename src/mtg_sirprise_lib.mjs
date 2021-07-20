@@ -9,10 +9,17 @@ const assert = (condition, message) => {
 // returns an array of all possible mana costs: possibleManaCosts('{1}{2/G}{B/R}') === ["AAAB", "AAAR", "AGB", "AGR"]
 // converts mana cost of 4 generic mana to AAAA
 const possibleManaCosts = manaCost => {
+  if (manaCost.includes('//')) {
+    const manaCostParts = manaCost.split('//')
+    assert(manaCostParts.length === 2)
+    return possibleManaCosts(manaCostParts[0]).concat(
+      possibleManaCosts(manaCostParts[1])
+    )
+  }
   manaCost = manaCost
     .replace(/\{(X|.\/P)\}/g, '') // remove costs that can be paid with 0 mana
     .replace(/\{([0-9]+)\}/g, (_, match) => 'A'.repeat(parseInt(match, 10)))
-    .replace(/[{}]/g, '')
+    .replace(/[{} ]/g, '')
     .toUpperCase()
   if (manaCost.search('/') === -1) {
     return [manaCost.replace('2', 'AA')]
@@ -22,10 +29,8 @@ const possibleManaCosts = manaCost => {
   )
 }
 
-
-const isCastable = (openMana, manaCost) => {
-  assert(manaCost.includes('{'))
-  openMana = openMana.toUpperCase().match(/[WUBRGC]/g)
+const isCastableSimpleManaCost = (openMana, manaCost) => {
+  assert(typeof openMana !== 'string' && typeof manaCost !== 'string')
 
   const source = 0
   const openManaNode = {
@@ -45,19 +50,6 @@ const isCastable = (openMana, manaCost) => {
     C: Object.keys(openManaNode).length + 6, // exactly colorless
     A: Object.keys(openManaNode).length + 7, // any/generic mana
   }
-  // TODO
-  const hybridManaCostNode = {
-    WU: Object.keys(openManaNode).length + 8,
-    WB: Object.keys(openManaNode).length + 9,
-    WR: Object.keys(openManaNode).length + 10,
-    WG: Object.keys(openManaNode).length + 11,
-    UB: Object.keys(openManaNode).length + 12,
-    UR: Object.keys(openManaNode).length + 13,
-    UG: Object.keys(openManaNode).length + 14,
-    BR: Object.keys(openManaNode).length + 15,
-    BG: Object.keys(openManaNode).length + 16,
-    RG: Object.keys(openManaNode).length + 17,
-  }
 
   const sink = Object.keys(openManaNode).length + Object.keys(manaCostNode).length + 1
 
@@ -72,24 +64,19 @@ const isCastable = (openMana, manaCost) => {
     graph.addEdge(new jsgraphs.FlowEdge(openManaNode[c], manaCostNode['A'], 1000))
   })
 
-  let flowNeeded = 0
-  manaCost
-    .toUpperCase()
-    .replace(/\{(X|.\/P)\}/g, '')
-    .match(/\{([0-9]+|[WUBRGC]|[WUBRG2]\/[WUBRG])\}/g)
-    .map(x => x.replace(/[{}]/g, ''))
-    .forEach(x => {
-      if (Object.keys(openManaNode).includes(x)) {
-        graph.addEdge(new jsgraphs.FlowEdge(manaCostNode[x], sink, 1))
-        flowNeeded += 1
-      } else {
-        graph.addEdge(new jsgraphs.FlowEdge(manaCostNode['A'], sink, parseInt(x, 10)))
-        flowNeeded += parseInt(x, 10)
-      }
-    })
+  manaCost.forEach(c => {
+    graph.addEdge(new jsgraphs.FlowEdge(manaCostNode[c], sink, 1))
+  })
 
   const maxFlow = new jsgraphs.FordFulkerson(graph, source, sink).value
-  return maxFlow === flowNeeded
+  return maxFlow === manaCost.length
+}
+
+const isCastable = (openMana, manaCost) => {
+  assert(manaCost.includes('{'))
+  openMana = openMana.toUpperCase().split('')
+  return possibleManaCosts(manaCost).some(
+    simpleManaCost => isCastableSimpleManaCost(openMana, simpleManaCost.split('')))
 }
 
 export {isCastable, possibleManaCosts}

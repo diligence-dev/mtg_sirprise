@@ -29,7 +29,7 @@ const QueryResult = ({openMana, expansion}) => {
         if (json.data) {
           setCardImages(json.data
             .filter(card => {
-              if (openMana.length === 0) {
+              if (openMana === '') {
                 return true
               }
               return isCastable(openMana, card.mana_cost || card.card_faces[0].mana_cost)
