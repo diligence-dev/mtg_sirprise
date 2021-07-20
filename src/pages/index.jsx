@@ -8,8 +8,7 @@ const QueryResult = ({openMana, expansion}) => {
   const [cardImages, setCardImages] = useState([])
 
   useEffect(() => {
-    if (!expansion) {
-      setCardImages([])
+    if (!expansion || openMana.split('[').length !== openMana.split(']').length) {
       return
     }
 
@@ -53,7 +52,7 @@ export default function Home({location}) {
   const [expansion, setExpansion] = useState(location.search.replace('?', ''))
   const [openMana, setOpenMana] = useState('')
 
-  const [allExpansion, setAllExpansions] = useState([])
+  const [allExpansions, setAllExpansions] = useState([])
   useEffect(() => {
     fetch('https://api.scryfall.com/sets')
       .then(result => result.json())
@@ -61,20 +60,24 @@ export default function Home({location}) {
         if (!json.data) {
           return
         }
-        setAllExpansions(json.data
-          .filter(expansion =>
-            !expansion.parent_set_code
-              && !['spellbook', 'promo', 'funny', 'box', 'duel_deck', 'commander'].includes(expansion.set_type)
-              && !expansion.foil_only)
-          .sort(expansion => expansion.released_at))
+        const expansions = json.data
+          .filter(expansionData =>
+            !expansionData.parent_set_code
+              && !['spellbook', 'promo', 'funny', 'box', 'duel_deck', 'commander'].includes(expansionData.set_type)
+              && !expansionData.foil_only)
+          .sort(expansionData => expansionData.released_at)
+        setAllExpansions(expansions)
+        if (!expansion) {
+          setExpansion(expansions[0].code)
+        }
       })
-  }, [])
+  }, [expansion])
 
   return (
     <div>
       expansion: 
       <select value={expansion} onChange={callSetter(setExpansion)} onBlur={callSetter(setExpansion)}>
-        {allExpansion.map(expansion => (
+        {allExpansions.map(expansion => (
           <option value={expansion.code} key={expansion.id}>
             {expansion.code.toUpperCase()} - {expansion.name}
           </option>
@@ -82,7 +85,7 @@ export default function Home({location}) {
       </select>
       <br />
       openMana:
-      <input type='text' value={openMana} placeholder='ur' onChange={callSetter(setOpenMana)} />
+      <input type='text' value={openMana} placeholder='u[rw]' onChange={callSetter(setOpenMana)} />
       <br />
       <QueryResult openMana={openMana} expansion={expansion} />
     </div>

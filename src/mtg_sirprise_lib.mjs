@@ -35,49 +35,49 @@ const possibleManaCosts = manaCost => {
 const isCastableSimpleManaCost = (openMana, manaCost) => {
   assert(typeof openMana !== 'string' && typeof manaCost !== 'string')
 
-  const source = 0
-  const openManaNode = {
-    W: 1,
-    U: 2,
-    B: 3,
-    R: 4,
-    G: 5,
-    C: 6, // colorless
-  }
-  const manaCostNode = {
-    W: Object.keys(openManaNode).length + 1,
-    U: Object.keys(openManaNode).length + 2,
-    B: Object.keys(openManaNode).length + 3,
-    R: Object.keys(openManaNode).length + 4,
-    G: Object.keys(openManaNode).length + 5,
-    C: Object.keys(openManaNode).length + 6, // exactly colorless
-    A: Object.keys(openManaNode).length + 7, // any/generic mana
-  }
+  const nodes = new Set(['source', 'sink', 'openA'])
+  const edges = []
 
-  const sink = Object.keys(openManaNode).length + Object.keys(manaCostNode).length + 1
-
-  const graph = new jsgraphs.FlowNetwork(sink + 1)
-
-  openMana.forEach(c => {
-    graph.addEdge(new jsgraphs.FlowEdge(source, openManaNode[c], 1))
+  // landColors will be 'RGW' for a triome producing red, green, white mana
+  openMana.forEach((landColors, index) => {
+    const landId = `land${index}`
+    nodes.add(landId)
+    edges.push(['source', landId, 1])
+    edges.push([landId, 'openA', 1])
+    landColors.split('').forEach(landColor => {
+      nodes.add(`open${landColor}`)
+      edges.push([landId, `open${landColor}`, 1])
+    })
   })
 
-  Object.keys(openManaNode).forEach(c => {
-    graph.addEdge(new jsgraphs.FlowEdge(openManaNode[c], manaCostNode[c], 1000))
-    graph.addEdge(new jsgraphs.FlowEdge(openManaNode[c], manaCostNode['A'], 1000))
+  manaCost.forEach(costColor => {
+    nodes.add(`open${costColor}`)
+    nodes.add(`cost${costColor}`)
+    edges.push([`open${costColor}`, `cost${costColor}`, 999])
+    edges.push([`cost${costColor}`, 'sink', 1])
+  })
+  const nodeMap = {}
+  Array.from(nodes).forEach((nodeName, index) => {
+    nodeMap[nodeName] = index
   })
 
-  manaCost.forEach(c => {
-    graph.addEdge(new jsgraphs.FlowEdge(manaCostNode[c], sink, 1))
+  const graph = new jsgraphs.FlowNetwork(Array.from(nodes).length)
+  edges.forEach(edge => {
+    assert(2 <= edge.length && edge.length <= 3)
+    graph.addEdge(new jsgraphs.FlowEdge(nodeMap[edge[0]], nodeMap[edge[1]], edge[2]))
   })
 
-  const maxFlow = new jsgraphs.FordFulkerson(graph, source, sink).value
+  const maxFlow = new jsgraphs.FordFulkerson(graph, nodeMap['source'], nodeMap['sink']).value
   return maxFlow === manaCost.length
 }
 
 const isCastable = (openMana, manaCost) => {
   assert(manaCost.includes('{'))
-  openMana = openMana.toUpperCase().split('')
+  openMana = openMana
+    .toUpperCase()
+    .match(/[\[\(\{][^\]\)\}]+[\]\)\}]|[WUBRGC]/g)
+    .map(x => x.replace(/[\[\]\(\)\{\}]/g, ''))
+  assert(!openMana.includes('['))
   return possibleManaCosts(manaCost).some(
     simpleManaCost => isCastableSimpleManaCost(openMana, simpleManaCost.split('')))
 }
