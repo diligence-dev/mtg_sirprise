@@ -16,13 +16,16 @@ const possibleManaCosts = manaCost => {
       possibleManaCosts(manaCostParts[1])
     )
   }
+  assert(!manaCost.includes('//'))
   manaCost = manaCost
     .replace(/\{(X|.\/P)\}/g, '') // remove costs that can be paid with 0 mana
     .replace(/\{([0-9]+)\}/g, (_, match) => 'A'.repeat(parseInt(match, 10)))
     .replace(/[{} ]/g, '')
     .toUpperCase()
   if (manaCost.search('/') === -1) {
-    return [manaCost.replace('2', 'AA')]
+    manaCost = manaCost.replace(/2/g, 'AA')
+    assert(manaCost.replace(/[WUBRGCA]/g, '') === '')
+    return [manaCost]
   }
   return possibleManaCosts(manaCost.replace(/(.)\/(.)/, '$1')).concat(
     possibleManaCosts(manaCost.replace(/(.)\/(.)/, '$2'))
