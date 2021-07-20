@@ -12,16 +12,8 @@ const QueryResult = ({openMana, expansion}) => {
       return
     }
 
-    const colorQuery = (openMana === '' ? 'wubrgc' : openMana)
-      .split('')
-      .filter(c => 'wubrg'.includes(c.toLowerCase()))
-      .concat(['colorless'])
-      .map(c => 'c:' + c)
-      .join(' or ')
-
-    // TODO query for cycling and cycling cost separately
     const endpoint = 'https://api.scryfall.com/cards/search?order=cmc&q='
-    const request = `${endpoint}s:${expansion}+(t:instant or o:flash)+(${colorQuery})`
+    const request = `${endpoint}s:${expansion}+(t:instant or o:flash)`
     fetch(request)
       .then(result => result.json())
       .then(json => {
