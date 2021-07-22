@@ -14,8 +14,9 @@ const QueryResult = ({openMana, expansion}) => {
     }
 
     const endpoint = 'https://api.scryfall.com/cards/search?order=cmc&q='
-    const request = `${endpoint}s:${expansion}+(t:instant or o:flash)`
-    fetch(request)
+    const instantOrFlash = 't:instant or o:/flash\\n/ or o:"flash;" or o:/flash$/ or o:"has flash" or o:"had flash"'
+    const request = encodeURIComponent(`s:${expansion} and (${instantOrFlash})`)
+    fetch(endpoint + request)
       .then(result => result.json())
       .then(json => {
         if (json.data) {
@@ -70,7 +71,8 @@ export default function Home({location}) {
   const formLabelStyle = {fontSize}
   const openManaHelp = ('Use the color symbols "wubrgc" to define what open mana your opponent has.<br />' +
     'Use brackets if a land can produce one of multiple colors.<br />' +
-    'For example if your opponent has two Islands, a Treasure Map and a Raugrin Triome: "uuc[urw]"')
+    'For example if your opponent has two Islands, a Dungeon Map, a Raugrin Triome and a Treasure token: "uuc[urw][wubrg]"<br />' +
+    'You can use "*" instead of "[wubrg]".')
   return (
     <div style={{minWidth: '616px', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
       <h2 style={{fontSize: '35px'}}>MtG Sirprise</h2>
@@ -99,12 +101,12 @@ export default function Home({location}) {
             onChange={callSetter(setOpenMana)} data-tip={openManaHelp} />
       </div>
       <QueryResult openMana={openMana} expansion={expansion} />
-      <div id='donate' class='d-none'>
+      <div id='donate' className='d-none'>
         <a href='https://ko-fi.com/Z8Z51NG5X' target='_blank' rel='noreferrer'>
           <img style={{border: '0px', height: '36px'}}
               src='https://cdn.ko-fi.com/cdn/kofi2.png?v=2' alt='Buy Me a Coffee at ko-fi.com' />
         </a>
-        <form class='mt-2' action='https://www.paypal.com/cgi-bin/webscr' method='post' target='_top'>
+        <form className='mt-2' action='https://www.paypal.com/cgi-bin/webscr' method='post' target='_top'>
           <input type='hidden' name='cmd' value='_s-xclick' />
           <input type='hidden' name='hosted_button_id' value='TJ8E5ZSCKA4YG' />
           <input type='image' src='https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif' border='0'

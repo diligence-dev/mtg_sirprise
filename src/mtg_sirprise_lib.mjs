@@ -74,6 +74,7 @@ const isCastableSimpleManaCost = (openMana, manaCost) => {
 const isCastable = (openMana, manaCost) => {
   assert(manaCost.includes('{'))
   openMana = openMana
+    .replace('*', '[WUBRG]')
     .toUpperCase()
     .match(/[\[\(\{][^\]\)\}]+[\]\)\}]|[WUBRGC]/g)
     .map(x => x.replace(/[\[\]\(\)\{\}]/g, ''))
