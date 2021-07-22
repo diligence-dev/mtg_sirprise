@@ -65,15 +65,20 @@ export default function Home({location}) {
       })
   }, [expansion])
 
-  const formFieldStyle = {margin: '2px', width: '300px'}
+  const fontSize = '25px'
+  const formFieldStyle = {margin: '2px', width: '400px', fontSize}
+  const formLabelStyle = {fontSize}
   const openManaHelp = ('Use the color symbols "wubrgc" to define what open mana your opponent has.<br />' +
     'Use brackets if a land can produce one of multiple colors.<br />' +
     'For example if your opponent has two Islands, a Treasure Map and a Raugrin Triome: "uuc[urw]"')
   return (
     <div style={{minWidth: '616px', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      <h1 style={{fontSize: '30px'}}>MtG Sirprise</h1>
+      <h2 style={{fontSize: '35px'}}>MtG Sirprise</h2>
+      <h3 style={{fontSize, fontWeight: 'normal'}}>
+        find all instant/flash cards your opponent could have
+      </h3>
       <div>
-        <span>
+        <span style={formLabelStyle}>
           expansion:
         </span>
         <select
@@ -87,14 +92,27 @@ export default function Home({location}) {
         </select>
       </div>
       <div>
-        <span>
+        <span style={formLabelStyle}>
           open mana:
         </span>
         <input type='text' value={openMana}  style={formFieldStyle} placeholder='u[rw]'
-            onChange={callSetter(setOpenMana)} data-tip={openManaHelp} data-multiline={true} />
+            onChange={callSetter(setOpenMana)} data-tip={openManaHelp} />
       </div>
       <QueryResult openMana={openMana} expansion={expansion} />
-      <ReactTooltip />
+      <div id='donate' class='d-none'>
+        <a href='https://ko-fi.com/Z8Z51NG5X' target='_blank' rel='noreferrer'>
+          <img style={{border: '0px', height: '36px'}}
+              src='https://cdn.ko-fi.com/cdn/kofi2.png?v=2' alt='Buy Me a Coffee at ko-fi.com' />
+        </a>
+        <form class='mt-2' action='https://www.paypal.com/cgi-bin/webscr' method='post' target='_top'>
+          <input type='hidden' name='cmd' value='_s-xclick' />
+          <input type='hidden' name='hosted_button_id' value='TJ8E5ZSCKA4YG' />
+          <input type='image' src='https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif' border='0'
+            name='submit' title='PayPal - The safer, easier way to pay online!' alt='Donate with PayPal button' />
+          <img alt='' border='0' src='https://www.paypal.com/en_US/i/scr/pixel.gif' width='1' height='1' />
+        </form>
+      </div>
+      <ReactTooltip style={{fontSize}} backgroundColor='black' multiline={true} />
     </div>
   )
 }
