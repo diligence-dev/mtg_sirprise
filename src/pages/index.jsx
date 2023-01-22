@@ -13,9 +13,9 @@ const QueryResult = ({openMana, expansion}) => {
       return
     }
 
-    const endpoint = 'https://api.scryfall.com/cards/search?order=cmc&q='
+    const endpoint = 'https://api.scryfall.com/cards/search?order=review&q='
     const instantOrFlash = 't:instant or o:/flash\\n/ or o:"flash;" or o:/flash$/ or o:"has flash" or o:"had flash"'
-    const request = encodeURIComponent(`s:${expansion} and (${instantOrFlash})`)
+    const request = encodeURIComponent(`s:${expansion} and (${instantOrFlash}) and is:booster`)
     fetch(endpoint + request)
       .then(result => result.json())
       .then(json => {
